@@ -3,195 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Snake Neo">
-    <title>Snake: Psychedelic Edition</title>
+    <title>Snake Neon Rainbow</title>
     <style>
-        /* نفس التنسيقات السابقة مع تحسين بسيط للموبايل */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; }
-        body { 
-            background: #000; overflow: hidden; 
-            display: flex; justify-content: center; align-items: center; 
-            height: 100vh; width: 100vw; font-family: sans-serif;
-            transition: background 0.1s ease; touch-action: none;
-        }
+        body { background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; font-family: 'Arial Black', sans-serif; touch-action: none; }
         canvas { display: block; width: 100vw; height: 100vh; }
-        #ui { position: absolute; top: 40px; width: 100%; display: flex; justify-content: space-around; color: #fff; font-size: 18px; font-weight: bold; z-index: 5; pointer-events: none; }
-        #power-status { position: absolute; top: 75px; font-size: 16px; font-weight: bold; }
-        #overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
-        button { background: linear-gradient(45deg, #00ffcc, #00bbff); border: none; padding: 15px 40px; font-size: 20px; border-radius: 50px; font-weight: bold; color: #000; }
-        .pulse-bg { background: #1a0033 !important; }
+        
+        #ui { position: absolute; top: 40px; width: 100%; display: flex; flex-direction: column; align-items: center; color: #fff; z-index: 5; pointer-events: none; }
+        .stats-row { display: flex; justify-content: space-around; width: 100%; font-size: 18px; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        #bank-ui { font-size: 16px; color: #ffcc00; margin-top: 5px; font-weight: bold; text-shadow: 0 0 8px #ffcc00; }
+
+        #overlay, #shop-menu { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); flex-direction: column; justify-content: center; align-items: center; z-index: 20; text-align: center; color: white; }
+        
+        button { background: #00ffcc; border: none; padding: 12px 25px; font-size: 14px; border-radius: 50px; font-weight: bold; margin-top: 10px; cursor: pointer; color: #000; box-shadow: 0 0 15px #00ffcc; }
+        .shop-btn { background: #ffcc00; box-shadow: 0 0 15px #ffcc00; }
+        
+        .shop-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; padding: 10px; max-height: 50vh; overflow-y: auto; border: 1px solid #333; border-radius: 20px; }
+        .shop-item { background: #111; padding: 15px; border-radius: 15px; border: 2px solid #333; width: 140px; display: flex; flex-direction: column; align-items: center; }
+        
+        .exit-btn { background: #444 !important; color: white !important; width: 80%; margin-bottom: 15px; box-shadow: none; }
+        .cancel-btn { background: #ff3333 !important; color: white !important; width: 80%; margin-top: 5px; box-shadow: 0 0 10px #ff3333; }
     </style>
 </head>
 <body>
 
 <div id="ui">
-    <div>SCORE: <span id="score">0</span></div>
-    <div>LEVEL: <span id="level">1</span></div>
+    <div class="stats-row">
+        <div>SCORE: <span id="score">0</span></div>
+        <div>LEVEL: <span id="level">1</span></div>
+        <div>BEST: <span id="high-score">0</span></div>
+    </div>
+    <div id="bank-ui">💰 COINS: <span id="total-coins">0</span></div>
 </div>
-<div id="power-status"></div>
 
 <div id="overlay">
-    <h1 style="color: #fff; margin-bottom: 20px;">GAME OVER</h1>
-    <button onclick="resetGame()">PLAY AGAIN</button>
+    <h1 style="color: #ff3333; font-size: 40px; margin-bottom: 10px; text-shadow: 0 0 20px #ff3333;">WASTED</h1>
+    <div id="coins-earned" style="color:#ffcc00; font-size: 20px; margin-bottom: 20px;"></div>
+    <button onclick="resetGame()">RESPAWN</button>
+    <button class="shop-btn" onclick="openShop()">STORE 🛒</button>
+</div>
+
+<div id="shop-menu">
+    <h1 style="color:#ffcc00; font-size: 28px; margin-bottom: 10px;">VIP STORE</h1>
+    <button class="exit-btn" onclick="closeShop()">◀ BACK</button>
+    <div id="shop-coins" style="margin-bottom: 10px; font-size: 18px;">💰 Wallet: 0</div>
+    <div class="shop-container">
+        <div class="shop-item"><div style="font-size:30px">🍓</div><button onclick="buyItem('strawberry', 15)" id="btn-strawberry">15 💰</button></div>
+        <div class="shop-item"><div style="font-size:30px">🍊</div><button onclick="buyItem('orange', 25)" id="btn-orange">25 💰</button></div>
+        <div class="shop-item"><div style="font-size:30px">🍕</div><button onclick="buyItem('pizza', 40)" id="btn-pizza">40 💰</button></div>
+        <div class="shop-item"><div style="font-size:30px">🥭</div><button onclick="buyItem('mango', 60)" id="btn-mango">60 💰</button></div>
+        <div class="shop-item"><div style="font-size:30px">🕶️</div><button onclick="buyItem('glasses', 50)" id="btn-glasses">50 💰</button></div>
+    </div>
+    <button class="cancel-btn" onclick="resetSkins()">RESET ALL ❌</button>
 </div>
 
 <canvas id="game"></canvas>
 
 <script>
-    // استخدم نفس كود الـ JavaScript الأخير اللي بعتهولك بالظبط هنا
-    // (وضعت لك هنا الأجزاء الأساسية لضمان عملها كتطبيق)
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
-    const body = document.body;
     const scoreElement = document.getElementById("score");
     const levelElement = document.getElementById("level");
-    const powerStatus = document.getElementById("power-status");
+    const highScoreElement = document.getElementById("high-score");
+    const totalCoinsElement = document.getElementById("total-coins");
     const overlay = document.getElementById("overlay");
+    const shopMenu = document.getElementById("shop-menu");
 
-    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resize);
-    resize();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type, duration, vol=0.1) {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    }
 
-    let box = Math.floor(canvas.width / 22);
-    let snake, direction, food, obstacles, score, level, speed, gameLoop;
-    let powerUp = { x: -100, y: -100, type: null, angle: 0 };
-    let timers = { shield: 0, magnet: 0 };
-    let smokeParticles = []; 
-    let sparkParticles = [];
+    let totalCoins = parseInt(localStorage.getItem("snakeTotalCoins")) || 0;
+    let highScore = parseInt(localStorage.getItem("snakeHighScore")) || 0;
+    let inventory = JSON.parse(localStorage.getItem("snakeInventory")) || { strawberry:false, orange:false, pizza:false, mango:false, glasses:false };
+    let activeFood = localStorage.getItem("snakeActiveFood") || "dot";
+    let hasGlasses = inventory.glasses;
 
-    const rainbow = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"];
+    let box, snake, direction, food, obstacles, score, level, speed, gameLoop;
+
+    // إعدادات المستويات (المستوى الأول قوس قزح)
+    const levelsConfig = [
+        { bg: "#000", snake: "rainbow", obs: "#8e44ad", glow: "#fff" }, 
+        { bg: "#050505", snake: "#ff00ff", obs: "#00ccff", glow: "#ff00ff" }, 
+        { bg: "#000", snake: "#ffff00", obs: "#ff3300", glow: "#ffff00" }, 
+        { bg: "#0a0a0a", snake: "#00ffcc", obs: "#ffffff", glow: "#00ffcc" }
+    ];
+
+    function resize() { 
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
+        box = Math.floor(canvas.width / 20);
+    }
+    window.addEventListener('resize', resize); resize();
 
     function init() {
         snake = [{x: 10 * box, y: 10 * box}, {x: 9 * box, y: 10 * box}, {x: 8 * box, y: 10 * box}];
-        direction = "RIGHT"; score = 0; level = 1; speed = 120;
-        scoreElement.innerText = score; levelElement.innerText = level;
-        overlay.style.display = "none";
-        obstacles = []; for(let i=0; i<6; i++) spawnObstacle();
-        spawnFood(); smokeParticles = []; sparkParticles = [];
-        powerUp.type = null;
+        direction = "RIGHT"; score = 0; level = 1; speed = 130;
+        obstacles = [{x: 5*box, y: 5*box}, {x: 15*box, y: 15*box}, {x: 5*box, y: 15*box}];
+        updateUI();
+        overlay.style.display = "none"; shopMenu.style.display = "none";
+        spawnFood();
+        startGameInterval();
+    }
+
+    function startGameInterval() {
         if(gameLoop) clearInterval(gameLoop);
         gameLoop = setInterval(draw, speed);
     }
 
-    function createSparks(x, y, color) {
-        for(let i=0; i<15; i++) {
-            sparkParticles.push({ x: x, y: y, size: Math.random() * 4 + 2, color: color, vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.5) * 10, life: 1.0 });
-        }
+    function spawnFood() {
+        food = {
+            x: Math.floor(Math.random() * (Math.floor(canvas.width/box))) * box,
+            y: Math.floor(Math.random() * (Math.height/box))) * box // تصحيح بسيط لخطأ برمجي
+        };
+        food.y = Math.floor(Math.random() * (Math.floor(canvas.height/box))) * box;
+        if(obstacles.some(o => o.x === food.x && o.y === food.y)) spawnFood();
     }
 
-    function createSmoke(x, y, color) {
-        for(let i=0; i<3; i++) { 
-            smokeParticles.push({ x: x + box/2, y: y + box/2, size: Math.random() * (box / 4) + 2, color: color, alpha: 0.5, vx: (Math.random() - 0.5) * 1, vy: (Math.random() - 0.5) * 1 });
-        }
-    }
-
-    function spawnFood() { food = { x: Math.floor(Math.random() * (Math.floor(canvas.width/box))) * box, y: Math.floor(Math.random() * (Math.floor(canvas.height/box))) * box }; }
-
-    function spawnPowerUp() {
-        const types = ['shield', 'magnet'];
-        powerUp = { x: Math.floor(Math.random() * (Math.floor(canvas.width/box))) * box, y: Math.floor(Math.random() * (Math.floor(canvas.height/box))) * box, type: types[Math.floor(Math.random() * types.length)], angle: 0 };
-    }
-
-    function spawnObstacle() {
-        let ob = { x: Math.floor(Math.random() * (Math.floor(canvas.width/box))) * box, y: Math.floor(Math.random() * (Math.floor(canvas.height/box))) * box };
-        if(Math.abs(ob.x - snake[0].x) < box*4) return spawnObstacle();
-        obstacles.push(ob);
+    function updateUI() {
+        scoreElement.innerText = score;
+        levelElement.innerText = level;
+        highScoreElement.innerText = highScore;
+        totalCoinsElement.innerText = totalCoins;
     }
 
     function draw() {
-        ctx.fillStyle = "rgba(0,0,0,0.4)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        sparkParticles.forEach((sp, i) => {
-            sp.x += sp.vx; sp.y += sp.vy; sp.life -= 0.03;
-            if(sp.life <= 0) sparkParticles.splice(i, 1);
-            else { ctx.fillStyle = sp.color; ctx.globalAlpha = sp.life; ctx.fillRect(sp.x, sp.y, sp.size, sp.size); }
-        });
-        ctx.globalAlpha = 1;
-
-        smokeParticles.forEach((p, index) => {
-            p.x += p.vx; p.y += p.vy; p.alpha -= 0.1;
-            if(p.alpha <= 0) smokeParticles.splice(index, 1);
-            else { ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
-        });
-
-        ctx.fillStyle = "#8e44ad";
+        let config = levelsConfig[(level-1) % levelsConfig.length];
+        ctx.fillStyle = config.bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.shadowBlur = 10; ctx.shadowColor = config.obs;
+        ctx.fillStyle = config.obs; 
         obstacles.forEach(ob => ctx.fillRect(ob.x + 2, ob.y + 2, box - 4, box - 4));
 
-        ctx.fillStyle = "#ff0033";
-        ctx.beginPath(); ctx.arc(food.x + box/2, food.y + box/2, box/2 - 2, 0, Math.PI*2); ctx.fill();
-
-        if (powerUp.type) {
-            powerUp.angle += 0.1;
-            ctx.save();
-            ctx.translate(powerUp.x + box/2, powerUp.y + box/2);
-            ctx.rotate(powerUp.angle);
-            ctx.strokeStyle = powerUp.type === 'shield' ? "#ffcc00" : "#00bbff";
-            ctx.lineWidth = 3;
-            ctx.strokeRect(-box/3, -box/3, box/1.5, box/1.5);
-            ctx.restore();
+        // رسم الأكل (كورة حمراء نيون)
+        if(activeFood === "dot") {
+            ctx.shadowBlur = 15; ctx.shadowColor = "red";
+            ctx.fillStyle = "#ff0033";
+            ctx.beginPath();
+            ctx.arc(food.x + box/2, food.y + box/2, box/3.5, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            const foodIcons = { strawberry: "🍓", orange: "🍊", pizza: "🍕", mango: "🥭" };
+            ctx.shadowBlur = 0; ctx.font = `${box*0.8}px Arial`;
+            ctx.fillText(foodIcons[activeFood], food.x + 2, food.y + box - 8);
         }
 
+        // رسم الثعبان
+        const rainbowColors = ["#ff0000", "#ff7f00", "#ffff00", "#00ff00", "#0000ff", "#4b0082", "#9400d3"];
+        
         snake.forEach((part, i) => {
-            let color = timers.shield > 0 ? "#ffcc00" : rainbow[i % rainbow.length];
-            ctx.fillStyle = color;
-            if (i === snake.length - 1) createSmoke(part.x, part.y, color);
-            ctx.beginPath(); ctx.arc(part.x + box/2, part.y + box/2, box/2 - 2, 0, Math.PI*2); ctx.fill();
-        });
+            let partColor = (config.snake === "rainbow") ? rainbowColors[i % rainbowColors.length] : config.snake;
+            ctx.shadowBlur = 12; ctx.shadowColor = partColor;
+            
+            if(i === 0) { // الرأس
+                ctx.fillStyle = (config.snake === "rainbow") ? "white" : config.snake;
+                ctx.beginPath();
+                ctx.arc(part.x + box/2, part.y + box/2, box/2, 0, Math.PI * 2);
+                ctx.fill();
 
-        if (timers.magnet > 0) {
-            food.x += (snake[0].x - food.x) * 0.15;
-            food.y += (snake[0].y - food.y) * 0.15;
-        }
+                // عيون بيضاء كبيرة جداً
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = "white";
+                let eyeSize = box/2.6; // تكبير إضافي
+                let eyeOffset = box/4;
+                
+                let pupilX = 0, pupilY = 0;
+                if(direction === "RIGHT") pupilX = 3;
+                if(direction === "LEFT") pupilX = -3;
+                if(direction === "UP") pupilY = -3;
+                if(direction === "DOWN") pupilY = 3;
+
+                [-1, 1].forEach(side => {
+                    ctx.beginPath();
+                    ctx.arc(part.x + box/2 + (side * eyeOffset), part.y + box/2, eyeSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = "black";
+                    ctx.beginPath();
+                    ctx.arc(part.x + box/2 + (side * eyeOffset) + pupilX, part.y + box/2 + pupilY, eyeSize/1.8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = "white";
+                });
+            } else { // الجسم
+                ctx.fillStyle = partColor;
+                ctx.globalAlpha = 1 - (i / snake.length * 0.3);
+                ctx.beginPath();
+                ctx.arc(part.x + box/2, part.y + box/2, box/2.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        });
+        ctx.shadowBlur = 0;
 
         let headX = snake[0].x; let headY = snake[0].y;
-        if(direction === "LEFT") headX -= box; else if(direction === "RIGHT") headX += box;
-        else if(direction === "UP") headY -= box; else if(direction === "DOWN") headY += box;
+        if(direction === "LEFT") headX -= box;
+        if(direction === "RIGHT") headX += box;
+        if(direction === "UP") headY -= box;
+        if(direction === "DOWN") headY += box;
 
-        if(headX < 0) headX = Math.floor(canvas.width/box) * box - box; else if(headX >= canvas.width) headX = 0;
-        if(headY < 0) headY = Math.floor(canvas.height/box) * box - box; else if(headY >= canvas.height) headY = 0;
+        if(headX < 0) headX = Math.floor(canvas.width/box)*box - box;
+        else if(headX >= canvas.width) headX = 0;
+        if(headY < 0) headY = Math.floor(canvas.height/box)*box - box;
+        else if(headY >= canvas.height) headY = 0;
 
         let newHead = {x: headX, y: headY};
-
-        if (Math.abs(headX - powerUp.x) < 5 && Math.abs(headY - powerUp.y) < 5) {
-            timers[powerUp.type] = 100; powerUp.type = null;
+        if(snake.some(p => p.x === newHead.x && p.y === newHead.y) || 
+           obstacles.some(o => o.x === newHead.x && o.y === newHead.y)) {
+            playTone(150, 'sawtooth', 0.3);
+            endGame(); return;
         }
 
-        let hitObstacle = obstacles.some(o => o.x === headX && o.y === headY);
-        if(snake.some(p => p.x === newHead.x && p.y === newHead.y) || (hitObstacle && timers.shield <= 0)) {
-            clearInterval(gameLoop); overlay.style.display = "flex"; return;
-        }
-
-        if(Math.abs(headX - food.x) < box && Math.abs(headY - food.y) < box) {
-            score++; scoreElement.innerText = score; 
-            createSparks(food.x, food.y, "#ff0033");
-            body.classList.add("pulse-bg"); setTimeout(() => body.classList.remove("pulse-bg"), 100);
+        if(headX === food.x && headY === food.y) {
+            score++;
+            playTone(600, 'sine', 0.1);
             spawnFood();
-            if (score % 5 === 0) {
-                spawnPowerUp(); level++; levelElement.innerText = level;
-                speed = Math.max(40, speed - 5); clearInterval(gameLoop); gameLoop = setInterval(draw, speed);
-                spawnObstacle();
+            if(score % 12 === 0) {
+                level++;
+                speed = Math.max(50, speed - 15);
+                obstacles.push({
+                    x: Math.floor(Math.random() * (Math.floor(canvas.width/box))) * box,
+                    y: Math.floor(Math.random() * (Math.floor(canvas.height/box))) * box
+                });
+                startGameInterval();
             }
-        } else { snake.pop(); }
+            updateUI();
+        } else {
+            snake.pop();
+        }
         snake.unshift(newHead);
+    }
 
-        if (timers.shield > 0) { timers.shield--; powerStatus.innerText = "🛡️ SHIELD: " + Math.ceil(timers.shield/10); }
-        else if (timers.magnet > 0) { timers.magnet--; powerStatus.innerText = "🧲 MAGNET: " + Math.ceil(timers.magnet/10); }
-        else { powerStatus.innerText = ""; }
+    function endGame() {
+        clearInterval(gameLoop);
+        let earned = Math.floor(score / 4);
+        totalCoins += earned;
+        if(score > highScore) { highScore = score; localStorage.setItem("snakeHighScore", highScore); }
+        localStorage.setItem("snakeTotalCoins", totalCoins);
+        updateUI();
+        document.getElementById("coins-earned").innerText = `EARNED: 💰 ${earned}`;
+        overlay.style.display = "flex";
+    }
+
+    function openShop() {
+        overlay.style.display = "none";
+        shopMenu.style.display = "flex";
+        document.getElementById("shop-coins").innerText = `💰 Wallet: ${totalCoins}`;
+        updateShopButtons();
+    }
+    function closeShop() { shopMenu.style.display = "none"; overlay.style.display = "flex"; }
+
+    function resetSkins() {
+        activeFood = "dot";
+        localStorage.setItem("snakeActiveFood", "dot");
+        updateShopButtons();
+    }
+
+    function buyItem(id, price) {
+        if(inventory[id]) {
+            if(id === "glasses") hasGlasses = !hasGlasses;
+            else activeFood = id;
+        } else if(totalCoins >= price) {
+            totalCoins -= price;
+            inventory[id] = true;
+            localStorage.setItem("snakeTotalCoins", totalCoins);
+            localStorage.setItem("snakeInventory", JSON.stringify(inventory));
+            if(id !== "glasses") activeFood = id;
+            playTone(800, 'sine', 0.2);
+        }
+        localStorage.setItem("snakeActiveFood", activeFood);
+        updateShopButtons();
+        updateUI();
+        document.getElementById("shop-coins").innerText = `💰 Wallet: ${totalCoins}`;
+    }
+
+    function updateShopButtons() {
+        for(let id in inventory) {
+            let btn = document.getElementById("btn-"+id);
+            if(btn) {
+                let isActive = (activeFood === id || (id === "glasses" && hasGlasses));
+                btn.innerText = inventory[id] ? (isActive ? "ACTIVE" : "EQUIP") : btn.innerText;
+                btn.style.background = isActive ? "#00ffcc" : "#fff";
+            }
+        }
     }
 
     let startX, startY;
     document.addEventListener("touchstart", e => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; }, {passive: false});
-    document.addEventListener("touchmove", e => { e.preventDefault(); }, {passive: false});
     document.addEventListener("touchend", e => {
-        let dx = e.changedTouches[0].clientX - startX; let dy = e.changedTouches[0].clientY - startY;
-        if(Math.abs(dx) > Math.abs(dy)) { if(dx > 20 && direction !== "LEFT") direction = "RIGHT"; else if(dx < -20 && direction !== "RIGHT") direction = "LEFT"; }
-        else { if(dy > 20 && direction !== "UP") direction = "DOWN"; else if(dy < -20 && direction !== "DOWN") direction = "UP"; }
+        let dx = e.changedTouches[0].clientX - startX;
+        let dy = e.changedTouches[0].clientY - startY;
+        if(Math.abs(dx) > Math.abs(dy)) {
+            if(dx > 30 && direction !== "LEFT") direction = "RIGHT";
+            else if(dx < -30 && direction !== "RIGHT") direction = "LEFT";
+        } else {
+            if(dy > 30 && direction !== "UP") direction = "DOWN";
+            else if(dy < -30 && direction !== "DOWN") direction = "UP";
+        }
     });
 
-    function resetGame() { timers.shield = 0; timers.magnet = 0; init(); }
+    function resetGame() { init(); }
     init();
 </script>
 </body>
